@@ -48,7 +48,7 @@ def change_hotel_info(hotel_id: str, title: Optional[str] = None, name: Optional
 
     if title:
         hotels_db[hotel_id]["title"] = title
-        updates.append(f"Заголовок изменен на {title}")
+        updates.append(f"Заголовок изменен на - {title}")
 
     if name:
         hotels_db[hotel_id]["name"] = name
