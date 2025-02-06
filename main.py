@@ -57,7 +57,7 @@ def change_hotel_info(hotel_id: str, title: Optional[str] = None, name: Optional
     if updates:
         return {f'Изменения для id отеля {hotel_id} применены : {updates} - {hotels_db[hotel_id]}'}
 
-    return {"message": f"Нет изменений для отеля {hotel_id}"}
+    return {"message": f"Нет изменений для отеля : {hotel_id}"}
 
 
 if __name__ == "__main__":
