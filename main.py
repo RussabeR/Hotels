@@ -1,9 +1,80 @@
-from fastapi import FastAPI, HTTPException
-from typing import Optional
-import uvicorn
+from fastapi import FastAPI, Query, Body, HTTPException
 from fastapi.openapi.docs import get_swagger_ui_html
+import uvicorn
 
-app = FastAPI()
+app = FastAPI(docs_url=None)
+
+hotels = [
+    {"id": 1, "title": "Sochi"},
+    {"id": 2, "title": "Дубай"},
+    {"id": 1, "title": "Sochi", "name": "sochi"},
+    {"id": 2, "title": "Дубай", "name": "dubai"},
+]
+
+
+@app.get("/hotels")
+def get_hotels(
+        id: int | None = Query(None, description="Айдишник"),
+        title: str | None = Query(None, description="Название отеля"),
+):
+    return [hotel for hotel in hotels if
+            (id is None or hotel["id"] == id) and (title is None or hotel["title"] == title)]
+
+
+@app.post("/hotels")
+def create_hotel(
+        title: str = Body(embed=True),
+):
+    global hotels
+    if any(hotel["title"].lower() == title.lower() for hotel in hotels):
+        raise HTTPException(
+            status_code=409,
+            detail="Отель уже существует")
+
+    hotels.append({
+        "id": hotels[-1]["id"] + 1,
+        "title": title
+    })
+    return {"status": "OK", "hotel": hotels[-1]}
+
+
+@app.put("/hotels/{hotel_id}")
+def edit_hotel(
+        hotel_id: int,
+        title: str = Body(),
+        name: str = Body(),
+):
+    global hotels
+    hotel = [hotel for hotel in hotels if hotel["id"] == hotel_id][0]
+    hotel["title"] = title
+    hotel["name"] = name
+    return {"status": "OK"}
+
+
+@app.patch(
+    "/hotels/{hotel_id}",
+    summary="Частичное обновление данных об отеле",
+    description="<h1>Тут мы частично обновляем данные об отеле: можно отправить name, а можно title</h1>",
+)
+def partially_edit_hotel(
+        hotel_id: int,
+        title: str | None = Body(None),
+        name: str | None = Body(None),
+):
+    global hotels
+    hotel = [hotel for hotel in hotels if hotel["id"] == hotel_id][0]
+    if title:
+        hotel["title"] = title
+    if name:
+        hotel["name"] = name
+    return {"status": "OK"}
+
+
+@app.delete("/hotels/{hotel_id}")
+def delete_hotel(hotel_id: int):
+    global hotels
+    hotels = [hotel for hotel in hotels if hotel["id"] != hotel_id]
+    return {"status": "OK"}
 
 
 @app.get("/docs", include_in_schema=False)
@@ -17,48 +88,5 @@ async def custom_swagger_ui_html():
     )
 
 
-hotels_db = {
-    '1': {'title': 'Luxury Suites - Exclusive 5-star experience', 'name': 'The Lavender Inn'}
-}
-
-
-@app.get("/hotels/{hotel_id}")
-def get_info(hotel_id: str):
-    if hotel_id in hotels_db:
-        return f'Информация об отеле с id {hotel_id}: {hotels_db[hotel_id]}'
-    else:
-        raise HTTPException(status_code=404, detail=f'Отель с id {hotel_id} не найден!')
-
-
-@app.put("/hotels/{hotel_id}")
-def add_hotel_info(hotel_id: str, title: str, name: str):
-    if hotel_id in hotels_db:
-        return {"Ошибка": f'Отель с id {hotel_id} уже существует!'}
-
-    hotels_db[hotel_id] = {'title': title, 'name': name}
-    return {f'Добавлен новый отель: {hotel_id} - {hotels_db[hotel_id]}'}
-
-
-@app.patch("/hotels/{hotel_id}")
-def change_hotel_info(hotel_id: str, title: Optional[str] = None, name: Optional[str] = None):
-    if hotel_id not in hotels_db:
-        raise HTTPException(status_code=404, detail=f'Отель с id {hotel_id} не найден!')
-
-    updates = []
-
-    if title:
-        hotels_db[hotel_id]["title"] = title
-        updates.append(f"Заголовок изменен на  {title}")
-
-    if name:
-        hotels_db[hotel_id]["name"] = name
-        updates.append(f"Имя изменено на {name}")
-
-    if updates:
-        return {f'Изменения для id отеля {hotel_id} применены : {updates} - {hotels_db[hotel_id]}'}
-
-    return {"message": f"Нет изменений для отеля : {hotel_id}"}
-
-
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
+    uvicorn.run("main:app", reload=True)
