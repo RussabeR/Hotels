@@ -45,10 +45,14 @@ def edit_hotel(
         name: str = Body(),
 ):
     global hotels
-    hotel = [hotel for hotel in hotels if hotel["id"] == hotel_id][0]
+    hotel = next((hotel for hotel in hotels if hotel["id"] == hotel_id), None)
+    if hotel is None:
+        raise HTTPException(status_code=404, detail="Отель не найден")
+
     hotel["title"] = title
     hotel["name"] = name
-    return {"status": "OK"}
+
+    return {"status": "OK", "new_hotel_info": hotel}
 
 
 @app.patch(
