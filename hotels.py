@@ -19,25 +19,30 @@ hotels = [
 def get_hotels(
         id: int | None = Query(None, description="Айдишник"),
         title: str | None = Query(None, description="Название отеля"),
-        page: int = Query(1, description="Номер страницы"),
-        per_page: int = Query(3, description="Количество отелей на странице"),
+        page: int | None = Query(None, gt=0, description="Номер страницы"),
+        per_page: int | None = Query(None, gt=0, le=20, description="Количество отелей на странице"),
 ) -> Dict[str, Any]:
-    # Фильтруем отели по id и title
-    filtered_hotels = [
+    # Установка значений по умолчанию
+    if page is None:
+        page = 1
+    if per_page is None:
+        per_page = 3
+
+    # Фильтруем отели
+    hotels_ = [
         hotel for hotel in hotels
         if (id is None or hotel["id"] == id) and (title is None or hotel["title"] == title)
     ]
 
-    # Пагинация (срез списка)
+    # Пагинация
     start = (page - 1) * per_page
     end = start + per_page
-    paginated_hotels = filtered_hotels[start:end]
 
     return {
         "page": page,
         "per_page": per_page,
-        "total": len(filtered_hotels),
-        "hotels": paginated_hotels
+        "total": len(hotels_),
+        "hotels": hotels_[start:end]
     }
 
 
