@@ -1,6 +1,6 @@
-from fastapi import Query, HTTPException, APIRouter, Body
-from schemas.hotels_schema import Hotel, HotelPATCH
-from typing import List, Dict, Any
+from fastapi import Query, HTTPException, APIRouter, Body, Depends
+from src.schemas.hotels_schema import Hotel, HotelPATCH
+from src.api.dependencies import PaginationDep
 
 router = APIRouter(prefix="/hotels", tags=["Отели"])
 
@@ -15,35 +15,26 @@ hotels = [
 ]
 
 
-@router.get("", summary="Получение информации об отеле")
+@router.get("")
 def get_hotels(
+        pagination: PaginationDep,
         id: int | None = Query(None, description="Айдишник"),
         title: str | None = Query(None, description="Название отеля"),
-        page: int | None = Query(None, gt=0, description="Номер страницы"),
-        per_page: int | None = Query(None, gt=0, le=20, description="Количество отелей на странице"),
-) -> Dict[str, Any]:
-    # Установка значений по умолчанию
-    if page is None:
-        page = 1
-    if per_page is None:
-        per_page = 3
 
+):
     # Фильтруем отели
-    hotels_ = [
-        hotel for hotel in hotels
-        if (id is None or hotel["id"] == id) and (title is None or hotel["title"] == title)
-    ]
+    hotels_ = []
+    for hotel in hotels:
+        if id and hotel["id"] != id:
+            continue
+        if title and hotel["title"] != title:
+            continue
+        hotels_.append(hotel)
 
+    if pagination.page and pagination.per_page:
+        return hotels_[pagination.per_page * (pagination.page - 1):][:pagination.per_page]
+    return hotels_
     # Пагинация
-    start = (page - 1) * per_page
-    end = start + per_page
-
-    return {
-        "page": page,
-        "per_page": per_page,
-        "total": len(hotels_),
-        "hotels": hotels_[start:end]
-    }
 
 
 @router.post("",
