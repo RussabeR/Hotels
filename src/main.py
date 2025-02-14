@@ -6,9 +6,6 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent.parent))
 from src.api.hotels import router as router_hotels
-from src.config import settings
-
-print(f"Settings: {settings.DB_NAME=}")
 
 app = FastAPI(docs_url=None)
 app.include_router(router_hotels)
