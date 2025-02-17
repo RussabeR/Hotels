@@ -6,6 +6,7 @@ from sqlalchemy import pool
 from alembic import context
 from src.database import Base
 from src.models.hotels import HotelsORrm
+from src.models.rooms import RoomsORrm
 from src.config import settings
 
 # this is the Alembic Config object, which provides
