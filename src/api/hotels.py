@@ -1,9 +1,11 @@
 from fastapi import Query, HTTPException, APIRouter, Body, Depends
 from sqlalchemy import insert, select, func
+
+from repositories.hotels import HotelsRepository
+
 from src.database import async_session_maker
 from src.schemas.hotels_schema import Hotel, HotelPATCH
 from src.api.dependencies import PaginationDep
-from src.models.hotels import HotelsORrm
 
 router = APIRouter(prefix="/hotels", tags=["Отели"])
 
@@ -14,21 +16,23 @@ async def get_hotels(
         location: str | None = Query(None, description="Локация отеля"),
         title: str | None = Query(None, description="Название отеля"),
 ):
-    per_page = pagination.per_page or 5
     async with async_session_maker() as session:
-        query = select(HotelsORrm)
-        if title:
-            query = query.filter(func.lower(HotelsORrm.title).contains(title.strip().lower()))
-        if location:
-            query = query.filter(func.lower(HotelsORrm.location).contains(location.strip().lower()))
-
-        query = query.limit(per_page).offset(per_page * (pagination.page - 1)
-                                             )
-        print(query.compile(compile_kwargs={"literal_binds": True}))
-        result = await session.execute(query)
-        all_hotels = result.scalars().all()
-
-        return all_hotels
+        return await HotelsRepository(session).get_all()
+    # per_page = pagination.per_page or 5
+    # async with async_session_maker() as session:
+    #     query = select(HotelsORrm)
+    #     if title:
+    #         query = query.filter(func.lower(HotelsORrm.title).contains(title.strip().lower()))
+    #     if location:
+    #         query = query.filter(func.lower(HotelsORrm.location).contains(location.strip().lower()))
+    #
+    #     query = query.limit(per_page).offset(per_page * (pagination.page - 1)
+    #                                          )
+    #     print(query.compile(compile_kwargs={"literal_binds": True}))
+    #     result = await session.execute(query)
+    #     all_hotels = result.scalars().all()
+    #
+    #     return all_hotels
 
 
 @router.post("",
@@ -53,10 +57,10 @@ async def create_hotel(
             })
 ):
     async with async_session_maker() as session:
-        add_hotel_stmt = insert(HotelsORrm).values(**hotel_data.model_dump())
-        await session.execute(add_hotel_stmt)
-        await session.commit()
-
+        repo = HotelsRepository(session)
+        new_hotel = Hotel(title="Отель Сочи", location="Сочи, Морская 3")
+        result = await repo.add(new_hotel)
+        print(result)
     return {"status": "OK"}
 
 
