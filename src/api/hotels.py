@@ -57,24 +57,23 @@ async def create_hotel(
             })
 ):
     async with async_session_maker() as session:
-        repo = HotelsRepository(session)
-        new_hotel = Hotel(title="Отель Сочи", location="Сочи, Морская 3")
-        result = await repo.add(new_hotel)
-        print(result)
-    return {"status": "OK"}
+        await HotelsRepository(session).add(hotel_data)
+        await session.commit()
+
+    return {"status": "OK", "data": hotel_data}
 
 
 @router.put("/{hotel_id}",
             summary="Полное изменение отеля",
-            description="<h1>Тут мы полностью обновляем данные об отеле </h1>", )
-def edit_hotel(hotel_id: int, hotel_data: Hotel):
-    global hotels
-    hotel = next((hotel for hotel in hotels if hotel["id"] == hotel_id), None)
-    if hotel is None:
-        raise HTTPException(status_code=404, detail="Отель не найден")
-    hotel["title"] = hotel_data.title
-    hotel["name"] = hotel_data.name
-    return {"status": "OK", "new_hotel_info": hotel}
+            description="<h1>Тут мы полностью обновляем данные об отеле</h1>")
+async def update_hotel(
+        hotel_id: int,
+        hotel_data: Hotel = Body()
+):
+    async with async_session_maker() as session:
+        hotel = await HotelsRepository(session).update(hotel_id, hotel_data)
+        await session.commit()
+        return {"status": "OK", "data": hotel}
 
 
 @router.patch(
@@ -94,7 +93,10 @@ def partially_edit_hotel(
 
 
 @router.delete("/{hotel_id}", summary="Удаление выбранного отеля")
-def delete_hotel(hotel_id: int):
-    global hotels
-    hotels = [hotel for hotel in hotels if hotel["id"] != hotel_id]
-    return {"status": "OK"}
+async def delete_hotel(
+        hotel_data: Hotel = Body()
+):
+    async with async_session_maker() as session:
+        await HotelsRepository(session).delete(hotel_data)
+        await session.commit()
+        return {"status": "OK"}
