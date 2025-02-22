@@ -46,7 +46,7 @@ async def get_me(
     return user
 
 
-@router.get("/logout", summary="Выйти из системы")
+@router.post("/logout", summary="Выйти из системы")
 async def logout(
         response: Response
 ):
