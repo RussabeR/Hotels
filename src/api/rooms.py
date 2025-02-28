@@ -1,8 +1,5 @@
 from fastapi import Query, APIRouter, Body
-
 from src.api.dependencies import DBDep
-from src.repositories.rooms import RoomsRepository
-from src.database import async_session_maker
 from src.schemas.rooms_schema import RoomAdd, RoomAddRequest, RoomPatchRequest, RoomPatch
 
 router = APIRouter(prefix="/hotels", tags=["Номера"])
@@ -15,7 +12,7 @@ async def get_room(hotel_id: int, db: DBDep):
 
 @router.get("/{hotel_id}/rooms/{room_id}", summary="Получить информацию по номеру")
 async def get_room(hotel_id: int, room_id: int, db: DBDep):
-    return await db.rooms.get_one_or_non(id=room_id, hotel_id=hotel_id)
+    return await db.rooms.get_one_or_none(id=room_id, hotel_id=hotel_id)
 
 
 @router.post("/{hotel_id}/rooms",
@@ -28,7 +25,7 @@ async def create_room(hotel_id: int,
                                   "summary": "Сочи",
                                   "value": {
                                       "title": "2х местная, люкс",
-                                      "cost": "1500",
+                                      "price": "1500",
                                       "quantity": "3",
                                       "description": "Отель находится в уютном районе города, включая прекрасные пляжи",
                                   }
@@ -37,7 +34,7 @@ async def create_room(hotel_id: int,
                       ):
     _room_data = RoomAdd(hotel_id=hotel_id, **room_data.model_dump())
     await db.rooms.add(_room_data)
-    await db.rooms.commit()
+    await db.commit()
     return {"status": "OK"}
 
 
@@ -51,7 +48,7 @@ async def edit_room(hotel_id: int,
                     ):
     _room_data = RoomAdd(hotel_id=hotel_id, **room_data.model_dump())
     await db.rooms.edit(_room_data, hotel_id=hotel_id, id=room_id)
-    await db.rooms.commit()
+    await db.commit()
     return {"status": "OK"}
 
 
@@ -60,7 +57,7 @@ async def delete_hotel(hotel_id: int,
                        room_id: int,
                        db: DBDep):
     await db.rooms.delete(hotel_id=hotel_id, id=room_id)
-    await db.rooms.commit()
+    await db.commit()
     return {"status": "OK"}
 
 
@@ -76,5 +73,5 @@ async def partially_edit_room(hotel_id: int,
                               ):
     _room_data = RoomPatch(hotel_id=hotel_id, **room_data.model_dump(exclude_unset=True))
     await db.rooms.edit(_room_data, hotel_id=hotel_id, id=room_id, exclude_unset=True)
-    await db.rooms.commit()
+    await db.commit()
     return {"status": "OK"}
