@@ -16,33 +16,24 @@ async def add_booking(
     _booking_data = BookingAdd(
         user_id=user_id,
         price=room_price,
-        **booking_data.model_dump(),
+        **booking_data.dict(),
     )
+    print(_booking_data)
     booking = await db.bookings.add(_booking_data)
     await db.commit()
     return {"status": "OK", "data": booking}
-    # insert_query = text("""
-    #         INSERT INTO bookings (user_id, room_id, price, date_from, date_to)
-    #         VALUES (:user_id, :room_id, :price, :date_from, :date_to)
-    #         RETURNING id, user_id, room_id, price, date_from, date_to""")
-    #
-    # result = await db.execute(insert_query, {
-    #     "user_id": _booking_data.user_id,
-    #     "room_id": _booking_data.room_id,
-    #     "price": _booking_data.price,
-    #     "date_from": _booking_data.date_from,
-    #     "date_to": _booking_data.date_to
-    # })
-    #
-    # booking = result.mappings().first()
-    #
-    # await db.commit()
-    #
-    # return {"status": "OK", "data": booking}
 
 
-@router.get("")
+@router.get("/bookings")
 async def get_all_bookings(
         db: DBDep
 ):
     return await db.bookings.get_all()
+
+
+@router.get("/bookings/{user_id}")
+async def get_user_bookings(
+        db: DBDep,
+        user_id: UserIdDep
+):
+    return await db.bookings.get_filtered(user_id=user_id)

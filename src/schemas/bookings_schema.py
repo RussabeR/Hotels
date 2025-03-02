@@ -15,8 +15,8 @@ class BookingAdd(BaseModel):
     date_to: date
     price: int
 
+    model_config = ConfigDict(from_attributes=True)
+
 
 class Booking(BookingAdd):
     id: int
-
-    model_config = ConfigDict(from_attributes=True)

@@ -31,7 +31,7 @@ class BaseRepository:
         add_data_stmt = insert(self.model).values(**data.model_dump()).returning(self.model)
         print(f"Insert Statement: {add_data_stmt}")
         result = await self.session.execute(add_data_stmt)
-        model = result.mappings().one()
+        model = result.scalars().one()
         return self.schema.model_validate(model, from_attributes=True)
 
     async def edit(self, data: BaseModel, exclude_unset: bool = False, **filter_by) -> None:
