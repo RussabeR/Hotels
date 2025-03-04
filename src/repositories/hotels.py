@@ -1,5 +1,5 @@
 from datetime import date
-from sqlalchemy import select
+from sqlalchemy import select, func
 from src.models.rooms import RoomsORrm
 from src.repositories.base import BaseRepository
 from src.models.hotels import HotelsOrm
@@ -14,15 +14,28 @@ class HotelsRepository(BaseRepository):
     async def get_filtered_by_time(self,
                                    date_from: date,
                                    date_to: date,
-                                   location=location,
-                                   title=title,
-                                   limit=per_page,
-                                   offset=per_page * (pagination.page - 1)
-                                   ):
+                                   location: str,
+                                   title: str,
+                                   limit: int,
+                                   offset: int
+                                   ) -> list[Hotel]:
+
         rooms_ids_to_get = rooms_id_for_booking(date_from=date_from, date_to=date_to)
         hotels_ids_to_get = (
             select(RoomsORrm.hotel_id)
             .select_from(RoomsORrm)
             .filter(RoomsORrm.id.in_(rooms_ids_to_get))
         )
-        return await self.get_filtered(HotelsOrm.id.in_(hotels_ids_to_get))
+
+        query = select(HotelsOrm).filter(HotelsOrm.id.in_(hotels_ids_to_get))
+        if location:
+            query = query.filter(func.lower(HotelsOrm.location).contains(location.strip().lower()))
+        if title:
+            query = query.filter(func.lower(HotelsOrm.title).contains(title.strip().lower()))
+        query = (
+            query
+            .limit(limit)
+            .offset(offset)
+        )
+        result = await self.session.execute(query)
+        return [Hotel.model_validate(hotel, from_attributes=True) for hotel in result.scalars().all()]
