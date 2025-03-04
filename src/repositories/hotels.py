@@ -13,7 +13,11 @@ class HotelsRepository(BaseRepository):
 
     async def get_filtered_by_time(self,
                                    date_from: date,
-                                   date_to: date
+                                   date_to: date,
+                                   location=location,
+                                   title=title,
+                                   limit=per_page,
+                                   offset=per_page * (pagination.page - 1)
                                    ):
         rooms_ids_to_get = rooms_id_for_booking(date_from=date_from, date_to=date_to)
         hotels_ids_to_get = (
