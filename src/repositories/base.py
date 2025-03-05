@@ -1,6 +1,5 @@
 from sqlalchemy import insert, select, delete, update
 from pydantic import BaseModel
-from src.schemas.hotels_schema import Hotel
 
 
 class BaseRepository:
@@ -32,10 +31,13 @@ class BaseRepository:
 
     async def add(self, data: BaseModel):
         add_data_stmt = insert(self.model).values(**data.model_dump()).returning(self.model)
-        print(f"Insert Statement: {add_data_stmt}")
         result = await self.session.execute(add_data_stmt)
         model = result.scalars().one()
         return self.schema.model_validate(model, from_attributes=True)
+
+    async def add_bulk(self, data: list[BaseModel]):
+        add_data_stmt = insert(self.model).values([item.model_dump() for item in data])
+        await self.session.execute(add_data_stmt)
 
     async def edit(self, data: BaseModel, exclude_unset: bool = False, **filter_by) -> None:
         update_stmt = (update(self.model)
