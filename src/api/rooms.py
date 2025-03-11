@@ -9,11 +9,11 @@ router = APIRouter(prefix="/hotels", tags=["Номера"])
 
 
 @router.get("/{hotel_id}/rooms", summary="Получение списка номеров отеля")
-async def get_room(hotel_id: int,
-                   db: DBDep,
-                   date_from: date = Query(example="2025-03-04"),
-                   date_to: date = Query(example="2025-03-15")
-                   ):
+async def get_rooms(hotel_id: int,
+                    db: DBDep,
+                    date_from: date = Query(example="2025-03-04"),
+                    date_to: date = Query(example="2025-03-15")
+                    ):
     return await db.rooms.get_filtered_by_time(hotel_id=hotel_id, date_to=date_to, date_from=date_from)
 
 
