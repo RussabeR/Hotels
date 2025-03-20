@@ -3,3 +3,7 @@ __pycache__/
 .env
 .venv
 .idea
+celerybeat-schedule.db
+celerybeat-schedule.dir
+celerybeat-schedule.dat
+celerybeat-schedule.bak

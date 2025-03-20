@@ -1,10 +1,8 @@
-import json
 from fastapi_cache.decorator import cache
-
 from fastapi import APIRouter
 from src.api.dependencies import DBDep
-from src.redis_set import redis_manager
 from src.schemas.facilities_schema import FacilityAdd
+from src.tasks.tasks import sleep_task
 
 router = APIRouter(prefix="/facilities", tags=["Удобства"])
 
@@ -24,4 +22,7 @@ async def create_facility(
 ):
     facilities = await db.facilities.add(facility_data)
     await db.commit()
+
+    sleep_task.delay()
+    
     return {"status": "OK", "data": facilities}
