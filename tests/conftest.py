@@ -2,12 +2,15 @@ import json
 
 import pytest
 from httpx import ASGITransport, AsyncClient
+
+from src.api.dependencies import get_db
 from src.config import settings
-from src.database import Base, engine_null_pool, async_session_maker_null_pool
+from src.database import Base, engine_null_pool, async_session_maker_null_pool, engine
 from src.main import app
 from src.models import *
 from src.schemas.hotels_schema import HotelAdd
 from src.schemas.rooms_schema import RoomAdd
+from src.schemas.facilities_schema import FacilityAdd
 from src.utils.db_manager import DBManager
 
 
@@ -18,7 +21,7 @@ async def check_test_mode():
 
 @pytest.fixture(scope='session', autouse=True)
 async def setup_database(check_test_mode):
-    async with engine_null_pool.begin() as conn:
+    async with engine.begin() as conn:
         await  conn.run_sync(Base.metadata.drop_all)
         print('База дропнута')
         await  conn.run_sync(Base.metadata.create_all)
@@ -30,12 +33,17 @@ async def setup_database(check_test_mode):
     with open("tests/jsons/mock_rooms.json", "r", encoding="utf-8") as file:
         rooms = json.load(file)
 
+    # with open("tests/jsons/mock_facilities.json", "r", encoding="utf-8") as file:
+    #     facilities = json.load(file)
+
     hotels = [HotelAdd.model_validate(hotel) for hotel in hotels]
     rooms = [RoomAdd.model_validate(room) for room in rooms]
+    # facilities = [FacilityAdd.model_validate(facility) for facility in facilities]
 
     async with DBManager(session_factory=async_session_maker_null_pool) as db_:
         await db_.hotels.add_bulk(hotels)
         await db_.rooms.add_bulk(rooms)
+        # await db_.rooms.add_bulk(facilities)
         await db_.commit()
 
 
@@ -47,9 +55,10 @@ async def db() -> DBManager:
 
 @pytest.fixture(scope="session")
 async def ac():
-    async with AsyncClient(
-            transport=ASGITransport(app=app), base_url="http://test") as ac:
-        yield ac
+    async with app.router.lifespan_context(app):
+        async with AsyncClient(
+                transport=ASGITransport(app=app), base_url="http://test") as ac:
+            yield ac
 
 
 @pytest.fixture(scope='session', autouse=True)

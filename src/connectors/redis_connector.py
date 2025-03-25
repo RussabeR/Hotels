@@ -23,4 +23,4 @@ class RedisManager:
         await self.redis.delete(key)
 
     async def close(self):
-        await self.redis.close()
+        await self.redis.aclose()
