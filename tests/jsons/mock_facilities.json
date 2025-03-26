@@ -1,14 +1,11 @@
 [
   {
-    "room_id": 1,
     "title": "TV"
   },
   {
-    "room_id": 2,
     "title": "Split-system"
   },
   {
-    "room_id": 3,
     "title": "Wi-FI"
   }
 ]

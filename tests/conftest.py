@@ -33,17 +33,17 @@ async def setup_database(check_test_mode):
     with open("tests/jsons/mock_rooms.json", "r", encoding="utf-8") as file:
         rooms = json.load(file)
 
-    # with open("tests/jsons/mock_facilities.json", "r", encoding="utf-8") as file:
-    #     facilities = json.load(file)
+    with open("tests/jsons/mock_facilities.json", "r", encoding="utf-8") as file:
+        facilities = json.load(file)
 
     hotels = [HotelAdd.model_validate(hotel) for hotel in hotels]
     rooms = [RoomAdd.model_validate(room) for room in rooms]
-    # facilities = [FacilityAdd.model_validate(facility) for facility in facilities]
+    facilities = [FacilityAdd.model_validate(facility) for facility in facilities]
 
     async with DBManager(session_factory=async_session_maker_null_pool) as db_:
         await db_.hotels.add_bulk(hotels)
         await db_.rooms.add_bulk(rooms)
-        # await db_.rooms.add_bulk(facilities)
+        await db_.facilities.add_bulk(facilities)
         await db_.commit()
 
 
