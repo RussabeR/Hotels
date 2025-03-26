@@ -1,11 +1,13 @@
 import json
+from unittest import mock
+
+mock.patch('fastapi_cache.decorator.cache', lambda *args, **kwargs: lambda f: f).start()
 
 import pytest
 from httpx import ASGITransport, AsyncClient
 
-from src.api.dependencies import get_db
 from src.config import settings
-from src.database import Base, engine_null_pool, async_session_maker_null_pool, engine
+from src.database import Base, async_session_maker_null_pool, engine
 from src.main import app
 from src.models import *
 from src.schemas.hotels_schema import HotelAdd
@@ -55,10 +57,9 @@ async def db() -> DBManager:
 
 @pytest.fixture(scope="session")
 async def ac():
-    async with app.router.lifespan_context(app):
-        async with AsyncClient(
-                transport=ASGITransport(app=app), base_url="http://test") as ac:
-            yield ac
+    async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://test") as ac:
+        yield ac
 
 
 @pytest.fixture(scope='session', autouse=True)
@@ -68,3 +69,17 @@ async def register_test_user(ac, setup_database) -> AsyncClient:
                       "email": "sobaka@gmail.com",
                       "password": "12345"}
                   )
+
+
+@pytest.fixture(scope='session', autouse=True)
+async def authenticated_user(ac, register_test_user):
+    response = await  ac.post('/auth/login',
+                              json={"email": "sobaka@gmail.com",
+                                    "password": "12345"})
+
+    assert response.status_code == 200, f"Login failed: {response.text}"
+    token = response.json().get("access_token")
+    assert token, "Access token not found in response"
+    print(token)
+
+    return token
