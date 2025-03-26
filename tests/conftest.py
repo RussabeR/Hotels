@@ -71,15 +71,10 @@ async def register_test_user(ac, setup_database) -> AsyncClient:
                   )
 
 
-@pytest.fixture(scope='session', autouse=True)
-async def authenticated_user(ac, register_test_user):
-    response = await  ac.post('/auth/login',
-                              json={"email": "sobaka@gmail.com",
-                                    "password": "12345"})
-
-    assert response.status_code == 200, f"Login failed: {response.text}"
-    token = response.json().get("access_token")
-    assert token, "Access token not found in response"
-    print(token)
-
-    return token
+@pytest.fixture(scope='session')
+async def authenticated_ac(ac, register_test_user):
+    await  ac.post('/auth/login',
+                   json={"email": "sobaka@gmail.com",
+                         "password": "12345"})
+    assert ac.cookies['access_token']
+    yield ac
