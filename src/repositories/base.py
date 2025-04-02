@@ -12,13 +12,11 @@ class BaseRepository:
         self.session = session
 
     async def get_filtered(self, *filter, **filter_by):
-        query = (
-            select(self.model)
-            .filter(*filter)
-            .filter_by(**filter_by)
-        )
+        query = select(self.model).filter(*filter).filter_by(**filter_by)
         result = await self.session.execute(query)
-        return [self.mapper.map_to_domain_entity(model) for model in result.scalars().all()]
+        return [
+            self.mapper.map_to_domain_entity(model) for model in result.scalars().all()
+        ]
 
     async def get_all(self, *args, **kwargs):
         return await self.get_filtered()
@@ -32,7 +30,9 @@ class BaseRepository:
         return self.mapper.map_to_domain_entity(model)
 
     async def add(self, data: BaseModel):
-        add_data_stmt = insert(self.model).values(**data.model_dump()).returning(self.model)
+        add_data_stmt = (
+            insert(self.model).values(**data.model_dump()).returning(self.model)
+        )
         result = await self.session.execute(add_data_stmt)
         model = result.scalars().one()
         return self.mapper.map_to_domain_entity(model)
@@ -41,11 +41,14 @@ class BaseRepository:
         add_data_stmt = insert(self.model).values([item.model_dump() for item in data])
         await self.session.execute(add_data_stmt)
 
-    async def edit(self, data: BaseModel, exclude_unset: bool = False, **filter_by) -> None:
-        update_stmt = (update(self.model)
-                       .filter_by(**filter_by)
-                       .values(**data.model_dump(exclude_unset=exclude_unset))
-                       )
+    async def edit(
+        self, data: BaseModel, exclude_unset: bool = False, **filter_by
+    ) -> None:
+        update_stmt = (
+            update(self.model)
+            .filter_by(**filter_by)
+            .values(**data.model_dump(exclude_unset=exclude_unset))
+        )
         await self.session.execute(update_stmt)
 
     async def delete(self, **filter_by) -> None:

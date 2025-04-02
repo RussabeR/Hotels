@@ -4,7 +4,7 @@ from unittest import mock
 
 from src.api.dependencies import get_db
 
-mock.patch('fastapi_cache.decorator.cache', lambda *args, **kwargs: lambda f: f).start()
+mock.patch("fastapi_cache.decorator.cache", lambda *args, **kwargs: lambda f: f).start()
 
 import pytest
 from httpx import ASGITransport, AsyncClient
@@ -19,9 +19,9 @@ from src.schemas.facilities_schema import FacilityAdd
 from src.utils.db_manager import DBManager
 
 
-@pytest.fixture(scope='session', autouse=True)
+@pytest.fixture(scope="session", autouse=True)
 async def check_test_mode():
-    assert settings.MODE == 'TEST'
+    assert settings.MODE == "TEST"
 
 
 async def get_db_null_pool() -> DBManager:
@@ -38,13 +38,13 @@ async def db() -> DBManager:
 app.dependency_overrides[get_db] = get_db_null_pool
 
 
-@pytest.fixture(scope='session', autouse=True)
+@pytest.fixture(scope="session", autouse=True)
 async def setup_database(check_test_mode):
     async with engine.begin() as conn:
-        await  conn.run_sync(Base.metadata.drop_all)
-        print('База дропнута')
-        await  conn.run_sync(Base.metadata.create_all)
-        print('Таблицы созданы')
+        await conn.run_sync(Base.metadata.drop_all)
+        print("База дропнута")
+        await conn.run_sync(Base.metadata.create_all)
+        print("Таблицы созданы")
 
     with open("tests/jsons/mock_hotels.json", "r", encoding="utf-8") as file:
         hotels = json.load(file)
@@ -69,23 +69,22 @@ async def setup_database(check_test_mode):
 @pytest.fixture(scope="session")
 async def ac():
     async with AsyncClient(
-            transport=ASGITransport(app=app), base_url="http://test") as ac:
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as ac:
         yield ac
 
 
-@pytest.fixture(scope='session', autouse=True)
+@pytest.fixture(scope="session", autouse=True)
 async def register_test_user(ac, setup_database) -> AsyncClient:
-    await ac.post("/auth/register",
-                  json={
-                      "email": "sobaka@gmail.com",
-                      "password": "12345"}
-                  )
+    await ac.post(
+        "/auth/register", json={"email": "sobaka@gmail.com", "password": "12345"}
+    )
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope="session")
 async def authenticated_ac(ac, register_test_user):
-    await  ac.post('/auth/login',
-                   json={"email": "sobaka@gmail.com",
-                         "password": "12345"})
-    assert ac.cookies['access_token']
+    await ac.post(
+        "/auth/login", json={"email": "sobaka@gmail.com", "password": "12345"}
+    )
+    assert ac.cookies["access_token"]
     yield ac

@@ -11,10 +11,7 @@ class RoomsRepository(BaseRepository):
     model = RoomsORrm
     mapper = RoomDataMapper
 
-    async def get_filtered_by_time(self,
-                                   hotel_id: int,
-                                   date_from: date,
-                                   date_to: date):
+    async def get_filtered_by_time(self, hotel_id: int, date_from: date, date_to: date):
         rooms_ids_to_get = rooms_id_for_booking(date_from, date_to, hotel_id)
 
         query = (
@@ -23,7 +20,10 @@ class RoomsRepository(BaseRepository):
             .filter(RoomsORrm.id.in_(rooms_ids_to_get))
         )
         result = await self.session.execute(query)
-        return [RoomDataMapperRels.map_to_domain_entity(model) for model in result.unique().scalars().all()]
+        return [
+            RoomDataMapperRels.map_to_domain_entity(model)
+            for model in result.unique().scalars().all()
+        ]
 
     async def get_one_or_none(self, **filter_by):
         query = (

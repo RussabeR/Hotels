@@ -5,7 +5,7 @@ from src.database import Base
 
 
 class BookingsOrm(Base):
-    __tablename__ = 'bookings'
+    __tablename__ = "bookings"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     room_id: Mapped[int] = mapped_column(ForeignKey("rooms.id"))
@@ -13,4 +13,6 @@ class BookingsOrm(Base):
     date_from: Mapped[date] = mapped_column(nullable=False)
     date_to: Mapped[date] = mapped_column(nullable=False)
     price: Mapped[int]
-    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, server_default=func.now()
+    )
