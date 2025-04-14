@@ -17,10 +17,10 @@ router = APIRouter(prefix="/hotels", tags=["Номера"])
 @router.get("/{hotel_id}/rooms", summary="Получение списка номеров отеля")
 @cache(expire=10)
 async def get_rooms(
-    hotel_id: int,
-    db: DBDep,
-    date_from: date = Query(examples="2025-03-04"),
-    date_to: date = Query(examples="2025-03-15"),
+        hotel_id: int,
+        db: DBDep,
+        date_from: date = Query(examples="2025-03-04"),
+        date_to: date = Query(examples="2025-03-15"),
 ):
     return await db.rooms.get_filtered_by_time(
         hotel_id=hotel_id, date_to=date_to, date_from=date_from
@@ -30,7 +30,7 @@ async def get_rooms(
 @router.get("/{hotel_id}/rooms/{room_id}", summary="Получить информацию по номеру")
 @cache(expire=10)
 async def get_room(hotel_id: int, room_id: int, db: DBDep):
-    return await db.rooms.get_one_or_none(id=room_id, hotel_id=hotel_id)
+    return await db.rooms.get_one(id=room_id, hotel_id=hotel_id)
 
 
 @router.post("/{hotel_id}/rooms", summary="Добавление номера")
@@ -75,7 +75,7 @@ async def delete_hotel(hotel_id: int, room_id: int, db: DBDep):
     description="<h1>Тут мы частично обновляем данные о номере</h1>",
 )
 async def partially_edit_room(
-    hotel_id: int, room_id: int, room_data: RoomPatchRequest, db: DBDep
+        hotel_id: int, room_id: int, room_data: RoomPatchRequest, db: DBDep
 ):
     _room_data_dict = room_data.model_dump(exclude_unset=True)
     _room_data = RoomPatch(hotel_id=hotel_id, **_room_data_dict)

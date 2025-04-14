@@ -1,5 +1,6 @@
 # ruff: noqa: E402
 import json
+from collections.abc import AsyncGenerator
 from unittest import mock
 
 from src.api.dependencies import get_db
@@ -24,13 +25,13 @@ async def check_test_mode():
     assert settings.MODE == "TEST"
 
 
-async def get_db_null_pool() -> DBManager:
+async def get_db_null_pool() -> AsyncGenerator[DBManager]:
     async with DBManager(session_factory=async_session_maker_null_pool) as db:
         yield db
 
 
 @pytest.fixture(scope="function")
-async def db() -> DBManager:
+async def db() -> AsyncGenerator[DBManager]:
     async for db in get_db_null_pool():
         yield db
 
@@ -67,9 +68,9 @@ async def setup_database(check_test_mode):
 
 
 @pytest.fixture(scope="session")
-async def ac():
+async def ac() -> AsyncGenerator[AsyncClient]:
     async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
+            transport=ASGITransport(app=app), base_url="http://test"
     ) as ac:
         yield ac
 
@@ -79,6 +80,7 @@ async def register_test_user(ac, setup_database) -> AsyncClient:
     await ac.post(
         "/auth/register", json={"email": "sobaka@gmail.com", "password": "12345"}
     )
+    return ac
 
 
 @pytest.fixture(scope="session")
