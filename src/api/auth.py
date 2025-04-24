@@ -14,7 +14,8 @@ async def register_user(data: UserRequestAdd, db: DBDep):
         new_user_data = UserAdd(email=data.email, hashed_password=hashed_password)
         await db.users.add(new_user_data)
         await db.commit()
-    except ObjectExistYet:  # noqa
+    except Exception as e:
+        print(e)  # noqa
         raise HTTPException(status_code=409, detail='Такой пользователь уже существует')
     return {"status": "OK"}
 

@@ -1,11 +1,10 @@
-import typing
 from typing import Sequence
-
 from sqlalchemy import insert, select, delete, update
 from asyncpg.exceptions import UniqueViolationError
 from sqlalchemy.exc import NoResultFound, IntegrityError
 from pydantic import BaseModel
 
+from logger import logger
 from src.exceptions import ObjectNotFoundException, ObjectExistYet
 from src.repositories.mappers.base import DataMapper
 
@@ -46,14 +45,18 @@ class BaseRepository:
         return self.mapper.map_to_domain_entity(model)
 
     async def add(self, data: BaseModel):
-        stmt = insert(self.model).values(**data.model_dump()).returning(self.model)
         try:
+            stmt = insert(self.model).values(**data.model_dump()).returning(self.model)
             result = await self.session.execute(stmt)
             model = result.scalars().one()
             return self.mapper.map_to_domain_entity(model)
         except IntegrityError as e:
-            if isinstance(e.orig, UniqueViolationError):
-                raise
+            logger.error(f'Ошибка: Не удалось добавить данные={data} в БД, тип ошибки: {e}')
+            if isinstance(e.orig.__cause__, UniqueViolationError):
+                raise ObjectExistYet from e
+            else:
+                logger.error(f"Незнакомая ошибка, тип ошибки: {e}")
+                raise e
 
     async def add_bulk(self, data: Sequence[BaseModel]):
         add_data_stmt = insert(self.model).values([item.model_dump() for item in data])

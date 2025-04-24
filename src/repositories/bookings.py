@@ -1,7 +1,7 @@
 from datetime import date
 from fastapi import HTTPException
 
-from src.exceptions import NoAvailableRooms
+from src.exceptions import NoAvailableRoomsException
 from src.repositories.base import BaseRepository
 from src.models.bookings import BookingsOrm
 from src.repositories.mappers.mappers import BookingDataMapper
@@ -33,4 +33,4 @@ class BookingsRepository(BaseRepository):
             new_booking = await self.add(data)
             return new_booking
         else:
-            raise NoAvailableRooms
+            raise NoAvailableRoomsException
