@@ -3,8 +3,12 @@ from datetime import date
 from fastapi import Query, APIRouter, Body
 from fastapi_cache.decorator import cache
 from src.api.dependencies import DBDep
-from src.exceptions import RoomNotFoundException, \
-    HotelNotFoundHTTPException, HotelNotFoundException, handle_room_and_hotel_exceptions
+from src.exceptions import (
+    RoomNotFoundException,
+    HotelNotFoundHTTPException,
+    HotelNotFoundException,
+    handle_room_and_hotel_exceptions,
+)
 from src.schemas.rooms_schema import (
     RoomAddRequest,
     RoomPatchRequest,
@@ -18,10 +22,10 @@ router = APIRouter(prefix="/hotels", tags=["Номера"])
 @router.get("/{hotel_id}/rooms", summary="Получение списка номеров отеля")
 @cache(expire=10)
 async def get_rooms(
-        hotel_id: int,
-        db: DBDep,
-        date_from: date = Query(examples="2025-03-04"),
-        date_to: date = Query(examples="2025-03-15"),
+    hotel_id: int,
+    db: DBDep,
+    date_from: date = Query(examples="2025-03-04"),
+    date_to: date = Query(examples="2025-03-15"),
 ):
     return await RoomService(db).get_filtered_by_tyme(hotel_id, date_from, date_to)
 
@@ -78,7 +82,7 @@ async def delete_hotel(hotel_id: int, room_id: int, db: DBDep):
 )
 @handle_room_and_hotel_exceptions
 async def partially_edit_room(
-        hotel_id: int, room_id: int, room_data: RoomPatchRequest, db: DBDep
+    hotel_id: int, room_id: int, room_data: RoomPatchRequest, db: DBDep
 ):
     await RoomService(db).partially_edit_room(hotel_id, room_id, room_data)
     return {"status": "OK"}

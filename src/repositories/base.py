@@ -51,7 +51,9 @@ class BaseRepository:
             model = result.scalars().one()
             return self.mapper.map_to_domain_entity(model)
         except IntegrityError as e:
-            logger.error(f'Ошибка: Не удалось добавить данные={data} в БД, тип ошибки: {e}')
+            logger.error(
+                f"Ошибка: Не удалось добавить данные={data} в БД, тип ошибки: {e}"
+            )
             if isinstance(e.orig.__cause__, UniqueViolationError):
                 raise ObjectExistYet from e
             else:
@@ -63,7 +65,7 @@ class BaseRepository:
         await self.session.execute(add_data_stmt)
 
     async def edit(
-            self, data: BaseModel, exclude_unset: bool = False, **filter_by
+        self, data: BaseModel, exclude_unset: bool = False, **filter_by
     ) -> None:
         update_stmt = (
             update(self.model)

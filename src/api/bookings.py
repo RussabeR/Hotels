@@ -1,7 +1,12 @@
 from fastapi import APIRouter, HTTPException
 from src.api.dependencies import DBDep, UserIdDep
-from src.exceptions import NoAvailableRoomsException, \
-    NoAvailableRoomsHTTPException, RoomNotFoundException, RoomNotFoundHTTPException, ObjectNotFoundException
+from src.exceptions import (
+    NoAvailableRoomsException,
+    NoAvailableRoomsHTTPException,
+    RoomNotFoundException,
+    RoomNotFoundHTTPException,
+    ObjectNotFoundException,
+)
 from src.schemas.bookings_schema import BookingAddRequest, BookingAdd
 from src.schemas.hotels_schema import Hotel
 from src.schemas.rooms_schema import Room
@@ -22,9 +27,9 @@ async def get_user_bookings(db: DBDep, user_id: UserIdDep):
 
 @router.post("")
 async def add_booking(
-        user_id: UserIdDep,
-        db: DBDep,
-        booking_data: BookingAddRequest,
+    user_id: UserIdDep,
+    db: DBDep,
+    booking_data: BookingAddRequest,
 ):
     try:
         booking = await BookingService(db).add_booking(user_id, booking_data)
