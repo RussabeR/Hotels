@@ -19,7 +19,7 @@ services:
       - myNetwork
     env_file:
       - .env
-    command: "booking_celery --network=myNetwork booking_image celery --app=src.tasks.celery_app:celery_instance worker -l INFO"
+    command: "celery --app=src.tasks.celery_app:celery_instance worker -l INFO"
 
 
 
@@ -31,7 +31,7 @@ services:
       - myNetwork
     env_file:
       - .env
-    command: "booking_celery_bit --network=myNetwork booking_image celery --app=src.tasks.celery_app:celery_instance beat -l INFO"
+    command: "celery --app=src.tasks.celery_app:celery_instance beat -l INFO"
 
 
 networks:
