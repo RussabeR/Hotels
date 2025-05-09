@@ -10,7 +10,7 @@ docker run --name booking_db \
 -e POSTGRES_DB=booking \
 --network myNetwork \
 --volume pg-booking-data:/var/lib/postgresql/data \
--d postgres:16
+-d postgres:17
 
 docker run --name booking_cache \
 -p 7379:6379 \
