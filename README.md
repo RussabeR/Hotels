@@ -22,14 +22,13 @@ docker run --name booking_back \
 --network myNetwork \
 booking_image
 
-docker run --name booking_celery_worker
---network=myNetwork
-booking_image_celery --app=src.tasks.celery_app:celery_instance worker -l INFO
+docker run --name booking_celery_worker \
+--network=myNetwork \
+celery --app=src.tasks.celery_app:celery_instance worker -l INFO
 
-docker run --name booking_celery_beat
---network=myNetwork
-booking_image_celery
---app=src.tasks.celery_app:celery_instance worker -l INFO -B
+docker run --name booking_celery_beat \
+--network=myNetwork \
+celery --app=src.tasks.celery_app:celery_instance worker -l INFO -B
 
 docker build -t booking_image .
 
@@ -37,4 +36,6 @@ docker run --name nginx_booking \
 -v ./nginx.conf:/etc/nginx/nginx.conf \
 --network myNetwork \
 --rm -p 80:80 nginx
-  
+
+#(win) docker run --name nginx_booking -v "C:\Users\RussabeR\PyCharmMiscProject\nginx.conf:/etc/nginx/nginx.conf"
+--network myNetwork --rm -p 80:80 nginx
