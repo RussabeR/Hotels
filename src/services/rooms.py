@@ -6,7 +6,7 @@ from src.exceptions import (
     RoomNotFoundHTTPException,
     HotelNotFoundHTTPException,
     HotelNotFoundException,
-    RoomNotFoundException,
+    RoomNotFoundException, FacilityNotFoundException,
 )
 from src.schemas.facilities_schema import RoomFacilityAdd
 from src.schemas.rooms_schema import (
@@ -22,10 +22,10 @@ from src.services.hotels import HotelService
 
 class RoomService(BaseService):
     async def get_filtered_by_tyme(
-        self,
-        hotel_id: id,
-        date_from: date,
-        date_to: date,
+            self,
+            hotel_id: id,
+            date_from: date,
+            date_to: date,
     ):
         check_dates_from_dates_to(date_to, date_from)
         return await self.db.rooms.get_filtered_by_time(
@@ -67,10 +67,10 @@ class RoomService(BaseService):
         await self.db.commit()
 
     async def partially_edit_room(
-        self,
-        hotel_id: int,
-        room_id: int,
-        room_data: RoomPatchRequest,
+            self,
+            hotel_id: int,
+            room_id: int,
+            room_data: RoomPatchRequest,
     ):
         await HotelService(self.db).check_hotel_exist(hotel_id)
         await self.check_room_exist(room_id)

@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     DB_PASS: str
     REDIS_HOST: str
     REDIS_PORT: int
+    MAX_BOOKING_DAYS_AHEAD: int
 
     @property
     def REDIS_URL(self) -> str:

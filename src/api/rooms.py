@@ -7,13 +7,14 @@ from src.exceptions import (
     RoomNotFoundException,
     HotelNotFoundHTTPException,
     HotelNotFoundException,
-    handle_room_and_hotel_exceptions,
+    handle_room_and_hotel_exceptions, FacilityNotFoundException, FacilityNotFoundHTTPException,
 )
 from src.schemas.rooms_schema import (
     RoomAddRequest,
     RoomPatchRequest,
 )
 from src.exceptions import RoomNotFoundHTTPException
+from src.services.facilities import FacilityService
 from src.services.rooms import RoomService
 
 router = APIRouter(prefix="/hotels", tags=["Номера"])
@@ -22,10 +23,10 @@ router = APIRouter(prefix="/hotels", tags=["Номера"])
 @router.get("/{hotel_id}/rooms", summary="Получение списка номеров отеля")
 @cache(expire=10)
 async def get_rooms(
-    hotel_id: int,
-    db: DBDep,
-    date_from: date = Query(examples="2025-03-04"),
-    date_to: date = Query(examples="2025-03-15"),
+        hotel_id: int,
+        db: DBDep,
+        date_from: date = Query(examples="2025-03-04"),
+        date_to: date = Query(examples="2025-03-15"),
 ):
     return await RoomService(db).get_filtered_by_tyme(hotel_id, date_from, date_to)
 
@@ -42,8 +43,12 @@ async def get_room(hotel_id: int, room_id: int, db: DBDep):
 @router.post("/{hotel_id}/rooms", summary="Добавление номера")
 @handle_room_and_hotel_exceptions
 async def create_room(hotel_id: int, db: DBDep, room_data: RoomAddRequest = Body()):
-    room = await RoomService(db).create_room(hotel_id, room_data)
-    return {"status": "OK", "data": room}
+    try:
+        await FacilityService(db).check_facility_exist(facility_id=id)
+        await RoomService(db).create_room(hotel_id, room_data)
+    except FacilityNotFoundException:
+        raise FacilityNotFoundHTTPException
+    return {"status": "OK"}
 
 
 @router.put(
@@ -82,7 +87,7 @@ async def delete_hotel(hotel_id: int, room_id: int, db: DBDep):
 )
 @handle_room_and_hotel_exceptions
 async def partially_edit_room(
-    hotel_id: int, room_id: int, room_data: RoomPatchRequest, db: DBDep
+        hotel_id: int, room_id: int, room_data: RoomPatchRequest, db: DBDep
 ):
     await RoomService(db).partially_edit_room(hotel_id, room_id, room_data)
     return {"status": "OK"}
