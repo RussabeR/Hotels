@@ -1,20 +1,27 @@
+from typing import Sequence
 from sqlalchemy import insert, select, delete, update
+from asyncpg.exceptions import UniqueViolationError
+from sqlalchemy.exc import NoResultFound, IntegrityError
 from pydantic import BaseModel
-from src.schemas.hotels_schema import Hotel
+
+from logger import logger
+from src.exceptions import ObjectNotFoundException, ObjectExistYet
+from src.repositories.mappers.base import DataMapper
 
 
 class BaseRepository:
     model = None
-    schema: BaseModel = None
+    mapper: DataMapper = None
 
     def __init__(self, session):
         self.session = session
 
-    async def get_filtered(self, **filter_by):
-        query = select(self.model).filter_by(**filter_by)
+    async def get_filtered(self, *filter, **filter_by):
+        query = select(self.model).filter(*filter).filter_by(**filter_by)
         result = await self.session.execute(query)
-        print(f"Полученные объекты из БД: {query}")
-        return [self.schema.model_validate(model, from_attributes=True) for model in result.scalars().all()]
+        return [
+            self.mapper.map_to_domain_entity(model) for model in result.scalars().all()
+        ]
 
     async def get_all(self, *args, **kwargs):
         return await self.get_filtered()
@@ -25,20 +32,46 @@ class BaseRepository:
         model = result.scalars().one_or_none()
         if model is None:
             return None
-        return self.schema.model_validate(model, from_attributes=True)
+        return self.mapper.map_to_domain_entity(model)
+
+    async def get_one(self, **filter_by):
+        query = select(self.model).filter_by(**filter_by)
+        result = await self.session.execute(query)
+        try:
+            model = result.scalars().one()
+        except NoResultFound:
+            raise ObjectNotFoundException
+
+        return self.mapper.map_to_domain_entity(model)
 
     async def add(self, data: BaseModel):
-        add_data_stmt = insert(self.model).values(**data.model_dump()).returning(self.model)
-        print(f"Insert Statement: {add_data_stmt}")
-        result = await self.session.execute(add_data_stmt)
-        model = result.mappings().one()
-        return self.schema.model_validate(model, from_attributes=True)
+        try:
+            stmt = insert(self.model).values(**data.model_dump()).returning(self.model)
+            result = await self.session.execute(stmt)
+            model = result.scalars().one()
+            return self.mapper.map_to_domain_entity(model)
+        except IntegrityError as e:
+            logger.error(
+                f"Ошибка: Не удалось добавить данные={data} в БД, тип ошибки: {e}"
+            )
+            if isinstance(e.orig.__cause__, UniqueViolationError):
+                raise ObjectExistYet from e
+            else:
+                logger.error(f"Незнакомая ошибка, тип ошибки: {e}")
+                raise e
 
-    async def edit(self, data: BaseModel, exclude_unset: bool = False, **filter_by) -> None:
-        update_stmt = (update(self.model)
-                       .filter_by(**filter_by)
-                       .values(**data.model_dump(exclude_unset=exclude_unset))
-                       )
+    async def add_bulk(self, data: Sequence[BaseModel]):
+        add_data_stmt = insert(self.model).values([item.model_dump() for item in data])
+        await self.session.execute(add_data_stmt)
+
+    async def edit(
+        self, data: BaseModel, exclude_unset: bool = False, **filter_by
+    ) -> None:
+        update_stmt = (
+            update(self.model)
+            .filter_by(**filter_by)
+            .values(**data.model_dump(exclude_unset=exclude_unset))
+        )
         await self.session.execute(update_stmt)
 
     async def delete(self, **filter_by) -> None:
